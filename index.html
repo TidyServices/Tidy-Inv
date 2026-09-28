@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tidy Unit Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --ink:#14181b; --ink-2:#4d585f; --ink-3:#7f8b94;
+  --paper:#e8ebed; --panel:#fff; --line:#ccd4d9; --line-2:#e2e7ea;
+  --blue:#1f5fa8; --amber:#a8660b; --red:#9e2d24; --green:#2c6e49;
+  --chip:#f2f5f6;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ink:#e8edf0; --ink-2:#a6b2ba; --ink-3:#77848d;
+  --paper:#14181b; --panel:#1c2125; --line:#323b41; --line-2:#262d32;
+  --blue:#71abea; --amber:#e0a33f; --red:#e2735f; --green:#69bb8b; --chip:#232a2f;}}
+:root[data-theme="dark"]{--ink:#e8edf0;--ink-2:#a6b2ba;--ink-3:#77848d;--paper:#14181b;--panel:#1c2125;
+  --line:#323b41;--line-2:#262d32;--blue:#71abea;--amber:#e0a33f;--red:#e2735f;--green:#69bb8b;--chip:#232a2f}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.45;
+  font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+.wrap{max-width:1140px;margin:0 auto;padding:18px 15px 80px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.top{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0}
+.sub{color:var(--ink-2);font-size:13px;margin:2px 0 0;max-width:60ch}
+.toggles{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--panel)}
+.seg button{font:inherit;font-size:12.5px;font-weight:500;padding:6px 11px;border:0;background:transparent;
+  color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--blue);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.seg select{border:0;background:var(--panel);color:var(--ink);padding:6px 9px;font:inherit;font-size:12.5px}
+.verdictcard{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:16px 16px 4px;margin-bottom:14px}
+.verdict{font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0 0 3px}
+.verdict.short{color:var(--red)}.verdict.tight{color:var(--amber)}.verdict.ok{color:var(--green)}
+.fix{color:var(--ink-2);font-size:13px;margin:0 0 6px}
+.fix b{color:var(--ink);font-weight:600}
+.costline{font-size:13px;color:var(--ink-2);margin:0 0 13px;padding-top:8px;border-top:1px solid var(--line-2)}
+.costline b{color:var(--ink);font-weight:600}
+.tl{display:flex;flex-direction:column}
+.wk{display:grid;grid-template-columns:118px 1fr 84px 70px;gap:9px;align-items:center;padding:5px 4px;
+  border-radius:3px;border:0;background:none;width:100%;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.wk:hover,.wk[aria-expanded="true"]{background:var(--chip)}
+.wk:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.wk .date{font-size:12.5px;color:var(--ink-2)}
+.wk .date .stack{color:var(--amber);font-weight:600}
+.track{height:18px;background:color-mix(in srgb,var(--line) 40%,transparent);border-radius:2px;position:relative;overflow:hidden}
+.fill{height:100%;background:var(--blue);opacity:.9}
+.fill.near{background:var(--amber)}.fill.over{background:var(--red)}
+.wk .n{font-size:12.5px;color:var(--ink-2);text-align:right}
+.wk .n b{color:var(--ink);font-weight:600}
+.wk .cost{font-size:12.5px;text-align:right;color:var(--red);font-weight:600}
+.detail{margin:0 4px 8px;padding:10px 12px;background:var(--chip);border-radius:3px;font-size:13px}
+.detail p{margin:0 0 6px;color:var(--ink-2)}
+.detail ul{margin:0;padding-left:16px;color:var(--ink-2)}
+.detail li{margin-bottom:3px}
+.detail b{color:var(--ink);font-weight:600}
+.legend{font-size:12px;color:var(--ink-3);padding:8px 4px 10px;border-top:1px solid var(--line-2);margin-top:6px}
+h2{font-size:14.5px;font-weight:600;margin:22px 0 8px;letter-spacing:-.01em}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+table{width:100%;border-collapse:collapse;min-width:580px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line-2);font-size:13px;white-space:nowrap}
+th{font-weight:600;color:var(--ink-2);font-size:11.5px;background:color-mix(in srgb,var(--line) 18%,transparent)}
+th:first-child,td:first-child{text-align:left}
+tbody tr:last-child td{border-bottom:0}
+td.short{color:var(--red);font-weight:600}td.tight{color:var(--amber);font-weight:600}
+td .dim{color:var(--ink-3)}
+.events{display:flex;flex-direction:column;gap:8px}
+.ev{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--ink-3);border-radius:4px;padding:10px 12px}
+.ev[data-status="confirmed"]{border-left-color:var(--green)}
+.ev[data-status="likely"]{border-left-color:var(--amber)}
+.ev-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ev-name{font-weight:600}
+.ev-meta{color:var(--ink-2);font-size:12.5px}
+.ev-units{color:var(--ink-2);font-size:13px;margin-top:4px}
+.ev-units b{color:var(--ink);font-weight:600}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 6px;border-radius:2px;background:var(--chip);color:var(--ink-2)}
+.pill.rw{background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue)}
+.linkbtn{font:inherit;font-size:12.5px;background:none;border:0;color:var(--blue);cursor:pointer;padding:2px 0;text-decoration:underline}
+.linkbtn.warn{color:var(--ink-3)}.linkbtn.warn:hover{color:var(--red)}
+.ev-actions{display:flex;gap:12px;margin-top:6px}
+form,.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+label{display:block;font-size:11.5px;font-weight:500;color:var(--ink-2);margin-bottom:3px}
+input,select{font:inherit;font-size:14px;width:100%;padding:7px 8px;border:1px solid var(--line);
+  border-radius:3px;background:var(--paper);color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--blue);outline-offset:-1px}
+.unitrows{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.unitrow{display:grid;grid-template-columns:1.7fr .65fr .65fr .65fr auto;gap:6px;align-items:end}
+.actions{margin-top:13px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-size:14px;font-weight:600;padding:8px 15px;border:0;border-radius:3px;background:var(--blue);color:#fff;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--blue);border:1px solid var(--line);font-weight:500}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.hint{color:var(--ink-3);font-size:12.5px;margin:6px 0 0}
+.empty{color:var(--ink-2);font-size:13px;background:var(--panel);border:1px dashed var(--line);border-radius:4px;padding:14px}
+details summary{cursor:pointer;font-size:14.5px;font-weight:600;margin:22px 0 8px}
+.bookhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.bookhead h2{margin:22px 0 8px}
+dialog{border:1px solid var(--line);border-radius:5px;padding:0;background:var(--panel);color:var(--ink);
+  max-width:640px;width:calc(100% - 24px);max-height:88vh;overflow:auto;
+  margin-top:calc(env(safe-area-inset-top,0px) + 4vh)}
+dialog::backdrop{background:rgba(10,14,17,.55)}
+dialog form{border:0;border-radius:0}
+.dlg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:-2px 0 12px}
+.dlg-top h2{margin:0;font-size:16px}
+.closex{font:inherit;font-size:24px;line-height:1;background:none;border:0;color:var(--ink-3);cursor:pointer;padding:0 4px}
+.closex:hover{color:var(--ink)}
+footer{margin-top:26px;color:var(--ink-3);font-size:12px;line-height:1.6;border-top:1px solid var(--line);padding-top:11px}
+@media (max-width:700px){
+  h1{font-size:19px}
+  .wk{grid-template-columns:84px 1fr 54px 56px;gap:7px}
+  .wk .date,.wk .n,.wk .cost{font-size:11.5px}
+  .unitrow{grid-template-columns:1fr 1fr;gap:6px}
+  .unitrow>div:first-child{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="top">
+  <div>
+    <h1>Unit planner</h1>
+    <p class="sub">What's free to send, week by week — and what a shortfall costs to cover.</p>
+  </div>
+  <div class="toggles">
+    <div class="seg" role="group" aria-label="Scenario">
+      <button type="button" data-sc="confirmed">Signed only</button>
+      <button type="button" data-sc="expected" aria-pressed="true">Expected</button>
+      <button type="button" data-sc="worst">Worst case</button>
+    </div>
+    <div class="seg" role="group" aria-label="Horizon">
+      <button type="button" data-view="weeks" aria-pressed="true">12 weeks</button>
+      <button type="button" data-view="months">12 months</button>
+    </div>
+    <div class="seg" role="group" aria-label="Yard pace">
+      <button type="button" data-turn="normal" aria-pressed="true">Normal pace</button>
+      <button type="button" data-turn="push">Pushing it</button>
+    </div>
+    <div class="seg"><select id="focusType" aria-label="Unit type"></select></div>
+    <button type="button" class="btn" id="openForm">+ Add event</button>
+  </div>
+</div>
+
+<section class="verdictcard">
+  <p class="verdict" id="verdict">—</p>
+  <p class="fix" id="fix"></p>
+  <p class="costline" id="costline"></p>
+  <div class="tl" id="timeline"></div>
+  <p class="legend">Bar is units committed against yard stock — in month view, the worst week of that month. Right column is the rent-in cost to cover the gap. Tap a week for detail.</p>
+</section>
+
+<h2>Stock by yard</h2>
+<div class="scroll"><table id="yardTable"><thead></thead><tbody></tbody></table></div>
+<p class="hint">Ready plus needs-wash is what you can send. Damaged shown as +Nd and excluded.</p>
+
+<h2>Peak demand by unit type</h2>
+<div class="scroll"><table id="typeTable"><thead><tr>
+  <th>Unit type</th><th>Can send</th><th>Damaged</th><th>Peak need</th><th>Week</th><th>Spare</th><th>Rent-in cost</th>
+</tr></thead><tbody></tbody></table></div>
+
+<h2>Unit history lookup</h2>
+<div class="panel">
+  <div class="grid" style="grid-template-columns:1fr">
+    <div>
+      <label for="u-search">Search by location, customer, unit type, or unit ID</label>
+      <input id="u-search" type="text" placeholder="e.g. Floyd Fest, PJ-HANDICAP, or a unit ID" autocomplete="off">
+    </div>
+  </div>
+  <div id="u-results" class="unitrows"></div>
+  <div id="u-history"></div>
+  <p class="hint" id="u-hint">Live from Routeware, via Supabase — type at least 3 characters. Covers 150k+ location moves and 6,000 active units.</p>
+</div>
+
+<details id="assumptions">
+  <summary>Rent-in pricing and turnaround</summary>
+  <div class="panel">
+    <div class="grid">
+      <div><label for="a-rate">Rent-in, per unit per day ($)</label><input id="a-rate" type="number" min="0" step="0.5" value="12"></div>
+      <div><label for="a-haul">Haul in and out, per unit ($)</label><input id="a-haul" type="number" min="0" step="1" value="25"></div>
+      <div><label for="a-markup">Markup you pass on (%)</label><input id="a-markup" type="number" min="0" step="5" value="0"></div>
+    </div>
+    <p class="hint">Rates are placeholders — replace with what subcontractors actually charge you. Markup at 0% shows raw cost; raise it to see the number you'd quote.</p>
+    <div class="grid" style="margin-top:12px">
+      <div><label for="a-before">Staging days before delivery</label><input id="a-before" type="number" min="0" max="7" value="2"></div>
+      <div><label for="a-after">Wash and repair days after pickup</label><input id="a-after" type="number" min="0" max="7" value="3"></div>
+    </div>
+    <p class="hint">Normal pace uses these. Pushing it drops both to one day — the yard has hit that on 22% of peak-season turns, so it's real but not routine.</p>
+  </div>
+</details>
+
+<div class="bookhead">
+  <h2>On the books</h2>
+  <button type="button" class="btn ghost" id="openForm2">+ Add event</button>
+</div>
+<div class="events" id="eventList"></div>
+
+<dialog id="evDialog" aria-labelledby="formHead">
+<form id="evForm" autocomplete="off" method="dialog">
+  <div class="dlg-top"><h2 id="formHead">Add an event</h2>
+    <button type="button" class="closex" id="closeForm" aria-label="Close">&times;</button></div>
+  <input type="hidden" id="f-id">
+  <div class="grid">
+    <div><label for="f-name">Event</label><input id="f-name" required placeholder="Floyd Fest"></div>
+    <div><label for="f-yard">Staged from</label><select id="f-yard"></select></div>
+    <div><label for="f-start">Delivery</label><input id="f-start" type="date" required></div>
+    <div><label for="f-end">Pickup</label><input id="f-end" type="date" required></div>
+    <div><label for="f-status">Certainty</label><select id="f-status">
+      <option value="confirmed">Signed</option><option value="likely" selected>Verbal</option><option value="tentative">Inquiry</option>
+    </select></div>
+    <div><label for="f-prob">Chance it happens (%)</label><input id="f-prob" type="number" min="0" max="100" step="5" value="70"></div>
+  </div>
+  <div class="unitrows" id="unitRows"></div>
+  <div class="actions">
+    <button type="button" class="btn ghost" id="addRow">Add unit type</button>
+    <button type="submit" class="btn" id="saveBtn">Save event</button>
+    <button type="button" class="linkbtn" id="cancelEdit" hidden>Cancel</button>
+    <span class="hint" id="saveHint"></span>
+  </div>
+  <p class="hint">Low and high cover numbers that aren't settled. Expected uses likely, scaled by the chance it happens.</p>
+</form>
+</dialog>
+
+<footer id="foot"></footer>
+</div>
+
+<script>
+const FALLBACK_FLEET = [{"type": "PJ-SANITIZER", "total": 2823, "yards": {"Martinsville": {"ready": 268, "dirty": 137, "damaged": 19}, "Plum Creek": {"ready": 201, "dirty": 37, "damaged": 35}, "Rock Road": {"ready": 3, "dirty": 2, "damaged": 2}, "Salem": {"ready": 220, "dirty": 45, "damaged": 27}, "Salem Overflow": {"damaged": 44}}, "out": 1783}, {"type": "SE PJ-SANITIZER", "total": 1138, "yards": {"Martinsville": {"ready": 108, "dirty": 42, "damaged": 2}, "Plum Creek": {"ready": 64, "dirty": 3, "damaged": 1}, "Rock Road": {"ready": 2, "damaged": 1}, "Salem": {"ready": 194, "damaged": 10, "dirty": 4}}, "out": 707}, {"type": "SE PJ-HANDICAP", "total": 140, "yards": {"Martinsville": {"dirty": 9, "ready": 6, "damaged": 1}, "Plum Creek": {"ready": 9, "damaged": 1}, "Salem": {"ready": 22, "dirty": 4}, "Salem Overflow": {"ready": 1}}, "out": 87}, {"type": "PJ-HANDICAP", "total": 82, "yards": {"Martinsville": {"dirty": 4, "ready": 4}, "Plum Creek": {"ready": 7, "dirty": 1, "damaged": 1}, "Salem": {"ready": 14, "dirty": 3}, "Salem Overflow": {"damaged": 3, "ready": 1}}, "out": 44}, {"type": "SE SINK STATION", "total": 220, "yards": {"Martinsville": {"dirty": 8, "ready": 5, "damaged": 4}, "Plum Creek": {"ready": 6, "damaged": 1}, "Salem": {"damaged": 43, "ready": 29, "dirty": 10}}, "out": 114}, {"type": "PJ-SINK", "total": 170, "yards": {"Martinsville": {"ready": 13, "dirty": 7, "damaged": 1}, "Plum Creek": {"ready": 21, "dirty": 6, "damaged": 3}, "Salem": {"ready": 16, "damaged": 9, "dirty": 6}, "Salem Overflow": {"damaged": 7}}, "out": 81}, {"type": "SINKSTATION-LG", "total": 119, "yards": {"Martinsville": {"ready": 26, "damaged": 5, "dirty": 4}, "Plum Creek": {"ready": 10}, "Salem": {"damaged": 19, "ready": 4, "dirty": 3}}, "out": 48}, {"type": "SE PJ-SINK", "total": 32, "yards": {"Martinsville": {"ready": 1}, "Plum Creek": {"ready": 5, "damaged": 1, "dirty": 1}, "Salem": {"ready": 2, "damaged": 2, "dirty": 1}}, "out": 19}, {"type": "SE PJ-LIGHTS", "total": 105, "yards": {"Martinsville": {"ready": 3, "dirty": 1}, "Plum Creek": {"ready": 6, "damaged": 2}, "Salem": {"ready": 12, "damaged": 4, "dirty": 2}}, "out": 75}, {"type": "RESTROOM TRAILER", "total": 62, "yards": {"Martinsville": {"dirty": 2}, "Plum Creek": {"ready": 1}, "Rock Road": {"ready": 1}, "Salem": {"dirty": 15, "ready": 14, "damaged": 2}, "Salem Overflow": {"ready": 2, "damaged": 2}}, "out": 23}, {"type": "SE HOLDING TANK", "total": 41, "yards": {"Martinsville": {"damaged": 1, "dirty": 1}, "Plum Creek": {"ready": 18}, "Salem": {"ready": 5}}, "out": 16}, {"type": "TANK", "total": 78, "yards": {"Martinsville": {"ready": 15}, "Plum Creek": {"ready": 5}, "Salem": {"ready": 15, "damaged": 5, "dirty": 3}, "Salem Overflow": {"ready": 1}}, "out": 34}, {"type": "SE PJ-HOKIE", "total": 21, "yards": {"Plum Creek": {"ready": 12}}, "out": 9}, {"type": "PJ-TRAY", "total": 33, "yards": {"Martinsville": {"ready": 1}, "Plum Creek": {"ready": 8}, "Salem": {"ready": 20, "dirty": 1}}, "out": 3}, {"type": "PJ-HIRISE", "total": 24, "yards": {"Martinsville": {"dirty": 2, "ready": 1}, "Plum Creek": {"ready": 5, "dirty": 4}, "Salem": {"ready": 6, "dirty": 2}}, "out": 4}, {"type": "SANISTAND", "total": 30, "yards": {"Martinsville": {"ready": 14, "dirty": 1}, "Plum Creek": {"ready": 2}, "Salem": {"damaged": 7, "ready": 6}}, "out": 0}, {"type": "URINAL UNIT", "total": 20, "yards": {"Plum Creek": {"ready": 13}, "Salem": {"ready": 7}}, "out": 0}];
+const FALLBACK_RW_SEED = [{"name": "Special Olympics", "region": "RVA", "start": "2026-09-25", "end": "2026-09-27", "units": [{"type": "SE PJ-SANITIZER", "low": 5, "likely": 5, "high": 5}, {"type": "SE PJ-HANDICAP", "low": 3, "likely": 3, "high": 3}, {"type": "SE SINK STATION", "low": 2, "likely": 2, "high": 2}]}, {"name": "National Fallen Firefighters Foundation - 911 Me", "region": "RVA", "start": "2026-09-25", "end": "2026-09-27", "units": [{"type": "SE PJ-SANITIZER", "low": 3, "likely": 3, "high": 3}, {"type": "SE SINK STATION", "low": 1, "likely": 1, "high": 1}]}, {"name": "Budweiser Concert Series", "region": "RVA", "start": "2026-09-25", "end": "2026-09-27", "units": [{"type": "SE PJ-LIGHTS", "low": 28, "likely": 28, "high": 28}, {"type": "SE SINK STATION", "low": 4, "likely": 4, "high": 4}, {"type": "SE PJ-HANDI W LIGHTS", "low": 2, "likely": 2, "high": 2}]}, {"name": "Grandin Village Business Association", "region": "RVA", "start": "2026-09-25", "end": "2026-09-25", "units": [{"type": "SE PJ-SANITIZER", "low": 6, "likely": 6, "high": 6}, {"type": "SE PJ-HANDICAP", "low": 2, "likely": 2, "high": 2}]}, {"name": "Harvest Ridge Farms-Justin Brown", "region": "SVA", "start": "2026-09-29", "end": "2026-10-02", "units": [{"type": "SE PJ-SANITIZER", "low": 4, "likely": 4, "high": 4}, {"type": "SE SINK STATION", "low": 2, "likely": 2, "high": 2}, {"type": "SE PJ-HANDICAP", "low": 2, "likely": 2, "high": 2}]}, {"name": "David Trible", "region": "RVA", "start": "2026-10-01", "end": "2026-10-04", "units": [{"type": "SE PJ-SANITIZER", "low": 10, "likely": 10, "high": 10}]}, {"name": "Homestead Creamery", "region": "RVA", "start": "2026-10-02", "end": "2026-10-04", "units": [{"type": "SE PJ-SANITIZER", "low": 8, "likely": 8, "high": 8}, {"type": "SE SINK STATION", "low": 4, "likely": 4, "high": 4}, {"type": "SE PJ-HANDICAP", "low": 1, "likely": 1, "high": 1}]}, {"name": "Mhc Chamber Of Commerce", "region": "SVA", "start": "2026-10-02", "end": "2026-10-04", "units": [{"type": "SE PJ-SANITIZER", "low": 13, "likely": 13, "high": 13}, {"type": "SE PJ-HANDICAP", "low": 4, "likely": 4, "high": 4}]}, {"name": "Local Colors Of Roanoke-Hispanic Heritage Month ", "region": "RVA", "start": "2026-10-02", "end": "2026-10-04", "units": [{"type": "TRASH CAN", "low": 4, "likely": 4, "high": 4}, {"type": "SE PJ-SANITIZER", "low": 1, "likely": 1, "high": 1}, {"type": "SE SINK STATION", "low": 1, "likely": 1, "high": 1}]}, {"name": "Virginia Tech Corps Of Cadets Caldwell March Loc", "region": "NRV", "start": "2026-10-09", "end": "2026-10-09", "units": [{"type": "SE PJ-SANITIZER", "low": 6, "likely": 6, "high": 6}]}, {"name": "Vt Corp Of Cadets - Caldwell March Location #1 P", "region": "NRV", "start": "2026-10-09", "end": "2026-10-11", "units": [{"type": "SE PJ-SANITIZER", "low": 6, "likely": 6, "high": 6}]}, {"name": "Fall Festival", "region": "RVA", "start": "2026-10-09", "end": "2026-10-09", "units": [{"type": "SE PJ-SANITIZER", "low": 4, "likely": 4, "high": 4}]}, {"name": "Energize Ministries", "region": "SVA", "start": "2026-10-09", "end": "2026-10-11", "units": [{"type": "SE PJ-SANITIZER", "low": 5, "likely": 5, "high": 5}, {"type": "SE PJ-HANDICAP", "low": 1, "likely": 1, "high": 1}]}, {"name": "Fall Foliage Festival", "region": "RVA", "start": "2026-10-15", "end": "2026-10-18", "units": [{"type": "SE PJ-SANITIZER", "low": 8, "likely": 8, "high": 8}, {"type": "SE PJ-HANDICAP", "low": 1, "likely": 1, "high": 1}]}, {"name": "City Of Reidsville (Public Works)", "region": "SVA", "start": "2026-10-16", "end": "2026-10-18", "units": [{"type": "SE PJ-HANDICAP", "low": 2, "likely": 2, "high": 2}, {"type": "SE PJ-SANITIZER", "low": 2, "likely": 2, "high": 2}, {"type": "SE SINK STATION", "low": 2, "likely": 2, "high": 2}]}, {"name": "Bassett Cruise Inn", "region": "SVA", "start": "2026-10-16", "end": "2026-10-18", "units": [{"type": "SE PJ-SANITIZER", "low": 3, "likely": 3, "high": 3}, {"type": "SE PJ-HANDICAP", "low": 1, "likely": 1, "high": 1}]}, {"name": "Virginia Tech - Office Of Special Events - Holtz", "region": "NRV", "start": "2026-10-16", "end": "2026-10-18", "units": [{"type": "SE PJ-SANITIZER", "low": 15, "likely": 15, "high": 15}, {"type": "SE SINK STATION", "low": 4, "likely": 4, "high": 4}, {"type": "SE PJ-HANDICAP", "low": 3, "likely": 3, "high": 3}]}, {"name": "Star Bq Bash 2025 - Salem Farmers Market", "region": "RVA", "start": "2026-10-21", "end": "2026-10-21", "units": [{"type": "SE PJ-SANITIZER", "low": 9, "likely": 9, "high": 9}, {"type": "SE SINK STATION", "low": 2, "likely": 2, "high": 2}, {"type": "SE PJ-HANDICAP", "low": 1, "likely": 1, "high": 1}]}, {"name": "Blue Ridge Institute Museum-Folklife Festival", "region": "SVA", "start": "2026-10-23", "end": "2026-10-25", "units": [{"type": "SE PJ-SANITIZER", "low": 65, "likely": 65, "high": 65}, {"type": "SE PJ-HANDICAP", "low": 7, "likely": 7, "high": 7}, {"type": "SE SINK STATION", "low": 4, "likely": 4, "high": 4}, {"type": "SE PJ-HANDICAP ADA", "low": 2, "likely": 2, "high": 2}]}, {"name": "Martins Bar And Grill - Halloween Event", "region": "RVA", "start": "2026-10-30", "end": "2026-11-01", "units": [{"type": "SE PJ-LIGHTS", "low": 5, "likely": 5, "high": 5}, {"type": "SE SINK STATION", "low": 2, "likely": 2, "high": 2}, {"type": "SE PJ-HANDI W LIGHTS", "low": 1, "likely": 1, "high": 1}]}, {"name": "Alzheimers Association Roanoke", "region": "RVA", "start": "2026-11-13", "end": "2026-11-15", "units": [{"type": "SE PJ-SANITIZER", "low": 2, "likely": 2, "high": 2}, {"type": "SE PJ-HANDICAP", "low": 1, "likely": 1, "high": 1}, {"type": "SE SINK STATION", "low": 1, "likely": 1, "high": 1}]}, {"name": "Drumstick Dash", "region": "RVA", "start": "2026-11-25", "end": "2026-11-26", "units": [{"type": "SE PJ-SANITIZER", "low": 58, "likely": 58, "high": 58}, {"type": "SE SINK STATION", "low": 3, "likely": 3, "high": 3}, {"type": "SE PJ-HANDICAP", "low": 1, "likely": 1, "high": 1}]}];
+const YARD_ORDER=["Salem","Salem Overflow","Plum Creek","Martinsville","Rock Road"];
+const YARD_REGION={"Salem":"RVA","Salem Overflow":"RVA","Plum Creek":"NRV","Martinsville":"SVA","Rock Road":"—"};
+const REGION_YARD={"RVA":"Salem","NRV":"Plum Creek","SVA":"Martinsville","DEF":"Salem"};
+const WEEKS=12, KEY="tidy.unitplanner.v3", AKEY="tidy.assumptions.v3";
+const short=t=>t.replace("SE ","").replace("PJ-","").toLowerCase();
+const money=n=>"$"+Math.round(n).toLocaleString();
+
+// FLEET / byType / ALL_TYPES / EVENT_TYPES are populated live at boot (loadLiveFleet + deriveFleetIndexes);
+// FALLBACK_FLEET above is only used if the live fetch fails.
+let FLEET=[],byType={},ALL_TYPES=[],EVENT_TYPES=[];
+let A={rate:12,haul:25,markup:0,before:2,after:3};
+let events=[],scenario="expected",pace="normal",view="weeks",focusType="SE PJ-SANITIZER",openWeek=null;
+let liveStatus={fleet:"pending",events:"pending"};
+
+// --- Live unit-history lookup (Supabase, anon read-only) ---
+const SUPABASE_URL="https://zktkzstejpbxnunqpjqm.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdGt6c3RlanBieG51bnFwanFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNTI5MzEsImV4cCI6MjEwNTgyODkzMX0.-hnVzoj256o8WQibqKLF14FcqhNNFess-Q7q4M5NdW8";
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+async function sbGet(path){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/"+path,{headers:{
+    apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY}});
+  if(!res.ok)throw new Error("status "+res.status);
+  return res.json();
+}
+// PostgREST caps a plain request at the project's max-rows setting (1000 here) regardless of
+// ?limit=; page through with Range headers for anything that can run past that.
+async function sbGetAll(path,pageSize){
+  pageSize=pageSize||1000;
+  let all=[],offset=0;
+  for(;;){
+    const res=await fetch(SUPABASE_URL+"/rest/v1/"+path,{headers:{
+      apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY,
+      Range:`${offset}-${offset+pageSize-1}`}});
+    if(!res.ok&&res.status!==206)throw new Error("status "+res.status);
+    const chunk=await res.json();
+    all=all.concat(chunk);
+    if(chunk.length<pageSize)break;
+    offset+=pageSize;
+    if(offset>200000)break; // sanity stop
+  }
+  return all;
+}
+
+// --- Live fleet snapshot, from equipment_units ---
+// "out" = anywhere off a known yard (a customer site, in transit, or Site Empty) — mirrors the fleet
+// export's own convention. Ready/dirty/damaged only tallied for units sitting in one of the 5 yards.
+const YARD_ID_NAME={SALEM:"Salem",SALEMOVF:"Salem Overflow",PLUMCREEK:"Plum Creek",MARTINSVILLE:"Martinsville",ROCKROAD:"Rock Road"};
+function statusBucket(s){
+  if(s==="Dirty")return "dirty";
+  if(s==="Damaged")return "damaged";
+  if(s==="Clean"||s==="Dumpster - Ready")return "ready";
+  return null;
+}
+async function loadLiveFleet(){
+  const rows=await sbGetAll("equipment_units?select=type_code,yard_id,status");
+  if(!Array.isArray(rows)||!rows.length)throw new Error("empty fleet response");
+  const map={};
+  for(const r of rows){
+    const t=r.type_code; if(!t)continue;
+    if(!map[t])map[t]={type:t,total:0,yards:{},out:0};
+    const f=map[t]; f.total++;
+    const yn=r.yard_id&&YARD_ID_NAME[r.yard_id];
+    const bucket=statusBucket(r.status);
+    if(yn&&bucket){ if(!f.yards[yn])f.yards[yn]={}; f.yards[yn][bucket]=(f.yards[yn][bucket]||0)+1; }
+    else f.out++;
+  }
+  return Object.values(map);
+}
+
+// --- Live "on the books" events, from rw_services (svc_code = EVENT) ---
+// Rows are one type per line; grouped back into events by customer+site+dates. Capped to bookings
+// 30 days or shorter — Routeware's EVENT code also covers long-running standing placements (a unit
+// parked at one customer for months/years), and those units are already excluded from yard stock
+// (they're not "ready"/"dirty" anywhere), so counting their date range as new committed demand would
+// double-count capacity that was never available in the first place. Long-tail follow-up: worth a
+// second look if Mike wants standing placements modeled too.
+const EVENT_MAX_DAYS=30, EVENT_HORIZON_DAYS=400;
+function eventGroupName(r){return (r.customer_name||r.location_name||"Unnamed").trim().replace(/\s+/g," ");}
+async function loadLiveEvents(){
+  const today=iso(0), horizon=iso(EVENT_HORIZON_DAYS);
+  const rows=await sbGetAll(`rw_services?select=customer_name,location_name,region,type_code,quantity,start_date,end_date`+
+    `&svc_code=eq.EVENT&end_date=gte.${today}&start_date=lte.${horizon}&order=start_date.asc`);
+  const groups=new Map();
+  for(const r of rows){
+    if(!r.type_code||!r.start_date||!r.end_date)continue;
+    const sd=r.start_date.slice(0,10), ed=r.end_date.slice(0,10);
+    const span=(day(ed)-day(sd))/86400000;
+    if(span<0||span>EVENT_MAX_DAYS)continue;
+    const key=[r.customer_name||"",r.location_name||"",sd,ed].join("|");
+    let g=groups.get(key);
+    if(!g){g={name:eventGroupName(r),region:r.region,start:sd,end:ed,units:new Map()};groups.set(key,g);}
+    g.units.set(r.type_code,(g.units.get(r.type_code)||0)+(Number(r.quantity)||0));
+  }
+  let i=0;
+  return [...groups.values()].map(g=>({
+    id:"rw"+(i++),name:g.name,yard:REGION_YARD[g.region]||"Salem",
+    start:g.start,end:g.end,status:"confirmed",prob:100,source:"routeware",
+    units:[...g.units.entries()].map(([type,likely])=>({type,low:likely,likely,high:likely}))
+  }));
+}
+function deriveFleetIndexes(){
+  byType=Object.fromEntries(FLEET.map(f=>[f.type,f]));
+  ALL_TYPES=FLEET.map(f=>f.type);
+  EVENT_TYPES=ALL_TYPES.filter(t=>t.startsWith("SE "));
+  if(!ALL_TYPES.includes(focusType))focusType=EVENT_TYPES[0]||ALL_TYPES[0]||focusType;
+}
+function fallbackEvents(){
+  return FALLBACK_RW_SEED.map((e,i)=>({id:"rw"+i,name:e.name,yard:REGION_YARD[e.region]||"Salem",
+    start:e.start,end:e.end,status:"confirmed",prob:100,source:"routeware",units:e.units}));
+}
+let uSearchTimer=null;
+function unitHistoryInit(){
+  const input=document.getElementById("u-search");
+  const results=document.getElementById("u-results");
+  const histBox=document.getElementById("u-history");
+  const hint=document.getElementById("u-hint");
+  if(!input)return;
+  input.addEventListener("input",()=>{
+    clearTimeout(uSearchTimer);
+    const q=input.value.trim();
+    histBox.innerHTML="";
+    if(q.length<3){results.innerHTML="";hint.textContent="Live from Routeware, via Supabase — type at least 3 characters. Covers 150k+ location moves and 6,000 active units.";return;}
+    hint.textContent="Searching…";
+    uSearchTimer=setTimeout(async()=>{
+      try{
+        const esc_=q.replace(/[%*,()]/g,"");
+        const filter="or=("+["equipment_uid","location_name","type_code"].map(f=>`${f}.ilike.*${esc_}*`).join(",")+")";
+        const rows=await sbGet(`equipment_units?select=equipment_uid,type_code,yard_id,status,location_name&${filter}&limit=15`);
+        if(!rows.length){results.innerHTML="";hint.textContent="No units matched.";return;}
+        hint.textContent=`${rows.length} match${rows.length===1?"":"es"} — tap one for its full history.`;
+        results.innerHTML=rows.map(r=>`<button type="button" class="linkbtn" data-uid="${esc(r.equipment_uid)}"
+          style="display:block;text-align:left;width:100%;border-bottom:1px solid var(--line-2);padding:6px 0">
+          <b>${esc(r.type_code)||"—"}</b> — ${esc(r.status)||"unknown"} — ${r.yard_id?esc(r.yard_id):"out: "+esc(r.location_name||"unknown site")}
+        </button>`).join("");
+      }catch(e){hint.textContent="Couldn't reach the live data ("+e.message+").";}
+    },300);
+  });
+  results.addEventListener("click",async e=>{
+    const btn=e.target.closest("[data-uid]");
+    if(!btn)return;
+    const uid=btn.dataset.uid;
+    histBox.innerHTML="<p class='hint'>Loading history…</p>";
+    try{
+      const rows=await sbGet(`v_unit_history?equipment_uid=eq.${encodeURIComponent(uid)}&order=move_date.desc&limit=150`);
+      if(!rows.length){histBox.innerHTML="<p class='empty'>No history found for this unit.</p>";return;}
+      const head=rows[0];
+      histBox.innerHTML=`<p class="hint" style="margin-top:10px"><b>${esc(head.type_code)||"—"}</b> · ${esc(uid)} · currently <b>${esc(head.current_status)||"unknown"}</b>${head.current_yard_id?" at "+esc(head.current_yard_id):""} · ${rows.length} moves on file</p>
+      <div class="scroll"><table><thead><tr><th style="text-align:left">Date</th><th style="text-align:left">Move</th><th style="text-align:left">Yard</th><th style="text-align:left">Service</th><th style="text-align:left">Detail</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr><td style="text-align:left">${esc((r.move_date||"").slice(0,10))}</td><td style="text-align:left">${esc(r.move_type_description)||"—"}</td><td style="text-align:left">${esc(r.move_yard_id||r.yard_label)||"—"}</td><td style="text-align:left">${r.service_uid?esc(r.service_uid.slice(0,8)):"—"}</td><td style="text-align:left">${esc((r.detail||"").slice(0,60))}</td></tr>`).join("")}
+      </tbody></table></div>`;
+    }catch(e){histBox.innerHTML="<p class='empty'>Couldn't load history ("+e.message+").</p>";}
+  });
+}
+
+function stock(type,yard){
+  const f=byType[type]; if(!f) return {ready:0,wash:0,damaged:0};
+  const ys=yard?{[yard]:f.yards[yard]||{}}:(f.yards||{});
+  let ready=0,wash=0,damaged=0;
+  for(const y of Object.values(ys)){ready+=y.ready||0;wash+=y.dirty||0;damaged+=y.damaged||0;}
+  return {ready,wash,damaged};
+}
+const sendable=(t,y)=>{const s=stock(t,y);return s.ready+s.wash;};
+const turn=()=>pace==="push"?{before:1,after:1}:{before:+A.before||0,after:+A.after||0};
+
+const day=s=>new Date(s+"T00:00:00");
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const fmt=d=>d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+function iso(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+
+// Manually-added events persist in this browser (localStorage). Routeware-sourced events are never
+// persisted as such — they're re-fetched live on every load, so edits/cancellations in Routeware show
+// up here without anyone touching this tool. (An old snapshot may still be sitting in localStorage from
+// before this was wired up; it's dropped the first time this runs.)
+async function load(){
+  let stored=[];
+  try{const r=localStorage.getItem(KEY);stored=r?JSON.parse(r):[];}catch(e){stored=[];}
+  const manual=Array.isArray(stored)?stored.filter(e=>e.source==="manual"):[];
+  let live=[];
+  try{
+    live=await loadLiveEvents();
+    liveStatus.events="live";
+  }catch(e){
+    liveStatus.events="fallback: "+e.message;
+    live=manual.length?[]:fallbackEvents();
+  }
+  events=manual.concat(live);
+  try{const a=localStorage.getItem(AKEY);if(a)A={...A,...JSON.parse(a)};}catch(e){}
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(events));}catch(e){hint("Saved for this session only.");}}
+function saveA(){try{localStorage.setItem(AKEY,JSON.stringify(A));}catch(e){}}
+const hint=m=>document.getElementById("saveHint").textContent=m;
+
+function qty(ev,u){
+  if(scenario==="confirmed")return ev.status==="confirmed"?u.likely:0;
+  if(scenario==="worst")return u.high;
+  const p=ev.status==="confirmed"?1:(Number(ev.prob)||0)/100;
+  return Math.round(u.likely*p);
+}
+const hold=ev=>{const t=turn();return [addDays(day(ev.start),-t.before),addDays(day(ev.end),t.after)];};
+
+function weekList(n){
+  const out=[],s=new Date();s.setHours(0,0,0,0);s.setDate(s.getDate()-s.getDay());
+  for(let i=0;i<(n||WEEKS);i++){const a=addDays(s,i*7);out.push([a,addDays(a,6)]);}
+  return out;
+}
+function monthList(){
+  const out=[],n=new Date();
+  for(let i=0;i<12;i++){
+    const a=new Date(n.getFullYear(),n.getMonth()+i,1);
+    const b=new Date(n.getFullYear(),n.getMonth()+i+1,0);
+    a.setHours(0,0,0,0);b.setHours(0,0,0,0);out.push([a,b]);
+  }
+  return out;
+}
+// weeks that fall inside a period, for month drill-down
+function weeksWithin(a,b){
+  const out=[];let s=new Date(a);s.setDate(s.getDate()-s.getDay());
+  while(s<=b){const e=addDays(s,6);if(e>=a)out.push([new Date(s),e]);s=addDays(s,7);}
+  return out;
+}
+const periodList=()=>view==="months"?monthList():weekList();
+const label=(a,b)=>view==="months"
+  ? a.toLocaleDateString(undefined,{month:"long",year:a.getFullYear()!==new Date().getFullYear()?"numeric":undefined})
+  : `${fmt(a)}–${fmt(b)}`;
+// for a month, the number that matters is the worst week inside it
+function peakIn(type,a,b){
+  if(view!=="months")return {n:demand(type,a,b),when:null};
+  let best={n:0,when:null};
+  for(const [ws,we] of weeksWithin(a,b)){
+    const n=demand(type,ws,we);
+    if(n>best.n)best={n,when:ws};
+  }
+  return best;
+}
+const overlaps=(ev,a,b)=>{const[h1,h2]=hold(ev);return !(h2<a||h1>b);};
+function demand(type,a,b){let n=0;for(const ev of events){if(!overlaps(ev,a,b))continue;
+  for(const u of ev.units||[])if(u.type===type)n+=qty(ev,u);}return n;}
+function drivers(type,a,b){const r=[];for(const ev of events){if(!overlaps(ev,a,b))continue;
+  for(const u of ev.units||[])if(u.type===type&&qty(ev,u)>0)r.push({ev,n:qty(ev,u)});}
+  return r.sort((x,y)=>y.n-x.n);}
+
+// daily shortfall costing across the horizon
+function costFor(type,a,b){
+  const cap=sendable(type);let unitDays=0,peakShort=0;
+  for(let d=new Date(a);d<=b;d=addDays(d,1)){
+    const need=demand(type,d,d),gap=Math.max(0,need-cap);
+    unitDays+=gap; if(gap>peakShort)peakShort=gap;
+  }
+  const raw=unitDays*(+A.rate||0)+peakShort*(+A.haul||0);
+  return {cost:raw*(1+(+A.markup||0)/100),unitDays,peakShort};
+}
+
+function render(){
+  const W=periodList(),cap=sendable(focusType),tl=document.getElementById("timeline");
+  tl.innerHTML="";
+  let worst={pct:0,gap:0,label:"",idx:-1},total=0;
+
+  W.forEach(([ws,we],i)=>{
+    const pk=peakIn(focusType,ws,we),d=pk.n,pct=cap?d/cap:0;
+    const c=costFor(focusType,ws,we);total+=c.cost;
+    if(pct>worst.pct)worst={pct,gap:d-cap,label:view==="months"?(pk.when?"of "+fmt(pk.when):label(ws,we)):"of "+fmt(ws),idx:i};
+    const stack=drivers(focusType,ws,we).length;
+    const b=document.createElement("button");
+    b.type="button";b.className="wk";b.setAttribute("aria-expanded",openWeek===i);
+    b.innerHTML=`<span class="date">${label(ws,we)}${stack>=3?` <span class="stack">·${stack}</span>`:""}</span>
+      <span class="track"><span class="fill ${d>cap?"over":d>cap*.85?"near":""}" style="width:${Math.min(100,pct*100).toFixed(1)}%"></span></span>
+      <span class="n"><b>${d}</b>/${cap}</span>
+      <span class="cost">${c.cost>0?money(c.cost):""}</span>`;
+    b.onclick=()=>{openWeek=openWeek===i?null:i;render();};
+    tl.appendChild(b);
+    if(openWeek===i){
+      const det=document.createElement("div");det.className="detail";
+      const rows=drivers(focusType,ws,we),spare=cap-d;
+      const unit=view==="months"?"in the worst week":"committed";
+      let html=rows.length
+        ? `<p>${d} ${short(focusType)} ${unit}, ${spare<0?`<b>${Math.abs(spare)} more than you own</b>`:`<b>${spare}</b> spare`}.</p><ul>`+
+          rows.map(r=>`<li><b>${r.n}</b> — ${r.ev.name}${r.ev.status!=="confirmed"?` (${r.ev.prob}%)`:""}</li>`).join("")+`</ul>`
+        : `<p>Nothing booked. All <b>${cap}</b> ${short(focusType)} free.</p>`;
+      if(view==="months"&&rows.length){
+        const wk=weeksWithin(ws,we).map(([a,b])=>{const n=demand(focusType,a,b);
+          return n?`<li>${fmt(a)} — <b>${n}</b>${n>cap?` (short ${n-cap})`:""}</li>`:"";}).filter(Boolean).join("");
+        if(wk)html+=`<p style="margin-top:8px">Week by week:</p><ul>${wk}</ul>`;
+      }
+      if(rows.length>=3)html+=`<p style="margin-top:8px"><b>${rows.length} events stacked</b> — this is how the 2023 crunch happened, not one big booking.</p>`;
+      if(c.cost>0)html+=`<p style="margin-top:8px">Covering the gap: <b>${c.unitDays}</b> unit-days short, peak <b>${c.peakShort}</b> units at once → <b>${money(c.cost)}</b> to rent in.</p>`;
+      if(spare<0){
+        const per=YARD_ORDER.map(y=>({y,n:sendable(focusType,y)})).filter(x=>x.n>0)
+          .sort((a,b)=>b.n-a.n).map(x=>`${x.y} ${x.n}`).join(" · ");
+        html+=`<p style="margin-top:6px">Own stock sits at: ${per}.</p>`;
+      }
+      det.innerHTML=html;tl.appendChild(det);
+    }
+  });
+
+  const v=document.getElementById("verdict"),fx=document.getElementById("fix"),cl=document.getElementById("costline");
+  if(worst.gap>0){
+    v.className="verdict short";
+    v.textContent=`Short ${worst.gap} ${short(focusType)} the week ${worst.label}`;
+    fx.innerHTML=`Not a wall — a cost. Rent in, or trim the count with the customer.`;
+  }else if(worst.pct>.85){
+    v.className="verdict tight";
+    v.textContent=`Covered, barely — ${Math.round(worst.pct*100)}% committed the week ${worst.label}`;
+    fx.innerHTML=`No slack for a walk-in or a load coming back damaged.`;
+  }else{
+    v.className="verdict ok";v.textContent="Every week covered";
+    fx.innerHTML=`Peak commitment is <b>${Math.round(worst.pct*100)}%</b> of ${short(focusType)} stock.`;
+  }
+  cl.innerHTML = total>0
+    ? `Rent-in exposure across ${view==="months"?"12 months":"12 weeks"}, ${short(focusType)} only: <b>${money(total)}</b> at ${money(A.rate)}/unit/day plus ${money(A.haul)}/unit haul${+A.markup?`, marked up ${A.markup}%`:""}.`
+    : `No rent-in needed on ${short(focusType)} at this scenario and pace.`;
+
+  const active=[...new Set(events.flatMap(e=>(e.units||[]).map(u=>u.type)))];
+  const shown=active.length?active:EVENT_TYPES.slice(0,4);
+  const yards=YARD_ORDER.filter(y=>shown.some(t=>sendable(t,y)>0));
+  document.querySelector("#yardTable thead").innerHTML=
+    `<tr><th>Unit type</th>${yards.map(y=>`<th>${y}<div class="dim" style="font-weight:400;font-size:10.5px">${YARD_REGION[y]}</div></th>`).join("")}<th>Total</th></tr>`;
+  const yb=document.querySelector("#yardTable tbody");yb.innerHTML="";
+  shown.forEach(t=>{const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${t}</td>`+yards.map(y=>{const s=stock(t,y);
+      return `<td>${s.ready+s.wash}${s.damaged?`<span class="dim"> +${s.damaged}d</span>`:""}</td>`;}).join("")
+      +`<td><b>${sendable(t)}</b></td>`;yb.appendChild(tr);});
+
+  const tb=document.querySelector("#typeTable tbody");tb.innerHTML="";
+  const horizon=[W[0][0],W[W.length-1][1]];
+  shown.forEach(t=>{
+    const s=stock(t),c=sendable(t);let peak=0,pw="—";
+    W.forEach(([a,b])=>{const pk=peakIn(t,a,b);if(pk.n>peak){peak=pk.n;pw=view==="months"?fmt(pk.when||a):fmt(a);}});
+    const cost=costFor(t,horizon[0],horizon[1]).cost;
+    const cls=peak>c?"short":peak>c*.85?"tight":"";
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${t}</td><td>${c}</td><td>${s.damaged}</td><td class="${cls}">${peak}</td>
+      <td>${peak?pw:"—"}</td><td class="${cls}">${c-peak}</td><td class="${cost>0?"short":""}">${cost>0?money(cost):"—"}</td>`;
+    tb.appendChild(tr);
+  });
+
+  const el=document.getElementById("eventList");el.innerHTML="";
+  const sorted=[...events].sort((a,b)=>a.start.localeCompare(b.start));
+  if(!sorted.length)el.innerHTML='<p class="empty">Nothing on the books. Add an event and the weeks fill in.</p>';
+  sorted.forEach(ev=>{
+    const d=document.createElement("div");d.className="ev";d.dataset.status=ev.status;
+    const units=(ev.units||[]).map(u=>`<b>${u.low===u.high?u.likely:u.low+"–"+u.high}</b> ${short(u.type)}`).join(" · ");
+    const tag=ev.status==="confirmed"?"Signed":ev.status==="likely"?ev.prob+"% verbal":ev.prob+"% inquiry";
+    const src=ev.source==="routeware"?'<span class="pill rw">Routeware</span> ':'';
+    d.innerHTML=`<div class="ev-top"><span class="ev-name">${ev.name}</span>
+      <span class="ev-meta">${fmt(day(ev.start))}–${fmt(day(ev.end))} · ${ev.yard} · ${src}<span class="pill">${tag}</span></span></div>
+      <div class="ev-units">${units||"No units set"}</div>
+      <div class="ev-actions"><button type="button" class="linkbtn" data-edit="${ev.id}">Edit</button>
+      <button type="button" class="linkbtn warn" data-del="${ev.id}">Remove</button></div>`;
+    el.appendChild(d);
+  });
+}
+
+function unitRow(sel,u){
+  const div=document.createElement("div");div.className="unitrow";
+  div.innerHTML=`<div><label>Unit type</label><select class="u-type">${ALL_TYPES.map(t=>`<option ${t===sel?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div><label>Low</label><input class="u-low" type="number" min="0" value="${u?u.low:0}"></div>
+    <div><label>Likely</label><input class="u-likely" type="number" min="0" value="${u?u.likely:0}"></div>
+    <div><label>High</label><input class="u-high" type="number" min="0" value="${u?u.high:0}"></div>
+    <div><button type="button" class="btn ghost" data-droprow>Remove</button></div>`;
+  return div;
+}
+function resetForm(){
+  const f=document.getElementById("evForm");f.reset();
+  document.getElementById("f-id").value="";
+  const r=document.getElementById("unitRows");r.innerHTML="";r.appendChild(unitRow("SE PJ-SANITIZER"));
+  document.getElementById("f-start").value=iso(21);
+  document.getElementById("f-end").value=iso(23);
+  document.getElementById("formHead").textContent="Add an event";
+  document.getElementById("saveBtn").textContent="Save event";
+  document.getElementById("cancelEdit").hidden=true;
+}
+function editEvent(id){
+  const ev=events.find(e=>e.id===id);if(!ev)return;
+  document.getElementById("f-id").value=ev.id;
+  document.getElementById("f-name").value=ev.name;
+  document.getElementById("f-yard").value=ev.yard;
+  document.getElementById("f-start").value=ev.start;
+  document.getElementById("f-end").value=ev.end;
+  document.getElementById("f-status").value=ev.status;
+  document.getElementById("f-prob").value=ev.prob;
+  const r=document.getElementById("unitRows");r.innerHTML="";
+  (ev.units||[]).forEach(u=>r.appendChild(unitRow(u.type,u)));
+  if(!r.children.length)r.appendChild(unitRow("SE PJ-SANITIZER"));
+  document.getElementById("formHead").textContent="Edit event";
+  document.getElementById("saveBtn").textContent="Update event";
+  document.getElementById("cancelEdit").hidden=false;
+  const dlg=document.getElementById("evDialog");
+  if(!dlg.open)dlg.showModal();
+}
+
+async function init(){
+  document.getElementById("verdict").textContent="Loading live fleet data…";
+  try{
+    FLEET=await loadLiveFleet();
+    liveStatus.fleet="live";
+  }catch(e){
+    liveStatus.fleet="fallback: "+e.message;
+    FLEET=FALLBACK_FLEET;
+  }
+  deriveFleetIndexes();
+
+  const ys=document.getElementById("f-yard");
+  YARD_ORDER.forEach(y=>{const o=document.createElement("option");o.textContent=y;ys.appendChild(o);});
+  const ft=document.getElementById("focusType");
+  EVENT_TYPES.concat(ALL_TYPES.filter(t=>!t.startsWith("SE "))).forEach(t=>{
+    const o=document.createElement("option");o.value=t;o.textContent=t;ft.appendChild(o);});
+  await load();
+  ft.value=focusType;
+  ft.onchange=()=>{focusType=ft.value;openWeek=null;render();};
+  ["rate","haul","markup","before","after"].forEach(k=>{
+    const el=document.getElementById("a-"+k);el.value=A[k];
+    el.oninput=()=>{A[k]=+el.value||0;saveA();render();};
+  });
+  resetForm();
+  unitHistoryInit();
+  document.getElementById("addRow").onclick=()=>document.getElementById("unitRows").appendChild(unitRow("SE PJ-HANDICAP"));
+  document.getElementById("unitRows").addEventListener("click",e=>{
+    if(e.target.matches("[data-droprow]")&&document.querySelectorAll(".unitrow").length>1)
+      e.target.closest(".unitrow").remove();});
+  const dlg=document.getElementById("evDialog");
+  const openDlg=()=>{dlg.showModal();setTimeout(()=>document.getElementById("f-name").focus(),30);};
+  document.getElementById("openForm").onclick=()=>{resetForm();hint("");openDlg();};
+  document.getElementById("openForm2").onclick=()=>{resetForm();hint("");openDlg();};
+  document.getElementById("closeForm").onclick=()=>dlg.close();
+  document.getElementById("cancelEdit").onclick=()=>{resetForm();hint("");dlg.close();};
+  document.getElementById("eventList").addEventListener("click",e=>{
+    const del=e.target.getAttribute("data-del"),ed=e.target.getAttribute("data-edit");
+    if(del){events=events.filter(x=>x.id!==del);save();render();}
+    if(ed)editEvent(ed);});
+  document.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{scenario=b.dataset.sc;
+    document.querySelectorAll("[data-sc]").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
+  document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;openWeek=null;
+    document.querySelectorAll("[data-view]").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
+  document.querySelectorAll("[data-turn]").forEach(b=>b.onclick=()=>{pace=b.dataset.turn;
+    document.querySelectorAll("[data-turn]").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
+  document.getElementById("evForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const units=[...document.querySelectorAll(".unitrow")].map(r=>{
+      const likely=+r.querySelector(".u-likely").value||0;
+      const low=+r.querySelector(".u-low").value||likely;
+      const high=+r.querySelector(".u-high").value||likely;
+      return {type:r.querySelector(".u-type").value,low:Math.min(low,likely),likely,high:Math.max(high,likely)};
+    }).filter(u=>u.likely>0||u.high>0);
+    if(!units.length){hint("Add a unit count before saving.");return;}
+    const st=document.getElementById("f-status").value;
+    const rec={name:document.getElementById("f-name").value.trim(),
+      yard:document.getElementById("f-yard").value,
+      start:document.getElementById("f-start").value,
+      end:document.getElementById("f-end").value,
+      status:st,prob:st==="confirmed"?100:(+document.getElementById("f-prob").value||0),units};
+    const id=document.getElementById("f-id").value;
+    if(id){const i=events.findIndex(x=>x.id===id);if(i>-1)events[i]={...events[i],...rec};hint("Event updated.");}
+    else{events.push({id:"e"+Date.now(),source:"manual",...rec});hint("Event saved.");}
+    save();resetForm();render();
+    document.getElementById("evDialog").close();});
+
+  const evCount=events.filter(e=>e.source==="routeware").length;
+  const fleetNote=liveStatus.fleet==="live"
+    ?"Fleet counts read live from Routeware, via Supabase."
+    :`Couldn't reach live fleet data (${liveStatus.fleet.replace("fallback: ","")}) — showing the built-in snapshot instead.`;
+  const evNote=liveStatus.events==="live"
+    ?`${evCount} upcoming booked event${evCount===1?"":"s"} (30 days or shorter) loaded live from Routeware's service listing.`
+    :`Couldn't reach live booking data (${liveStatus.events.replace("fallback: ","")}) — showing a fallback set instead.`;
+  document.getElementById("foot").textContent=
+    `${fleetNote} ${evNote} `+
+    `Historical peak was 1,330 event units out at once in September 2023, with sanitizers at 88% of fleet. `+
+    `Standing Routeware placements longer than 30 days aren't counted as new demand here — those units are already out of yard stock, so counting them again would double the apparent shortfall. `+
+    `Manually added events stay in this browser; Routeware-sourced ones refresh on every load. Unit history lookup above is live too.`;
+  render();
+}
+init();
+</script>
+</body>
+</html>
